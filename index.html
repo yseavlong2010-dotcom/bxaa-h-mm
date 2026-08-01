@@ -35,7 +35,7 @@
             display: none;
         }
 
-        /* Màn hình chờ để mở khóa nhạc (Bắt buộc do chính sách trình duyệt) */
+        /* Màn hình chờ để mở khóa nhạc */
         #overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -137,6 +137,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: color 0.3s ease;
         }
 
         /* Buttons Container */
@@ -146,6 +147,7 @@
             gap: 16px;
             width: 100%;
             min-height: 60px;
+            position: relative;
         }
 
         button {
@@ -156,7 +158,8 @@
             border-radius: 50px;
             border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            transform-origin: center;
         }
 
         #btn-yes {
@@ -211,7 +214,7 @@
 
     <div class="card" id="main-card">
         <div class="img-box">
-            <img id="main-img" src="https://drive.google.com/uc?export=view&id=183WZjyDLGGH_ahuxbhgoBsrVxSBTUxvz" alt="Cute Memory">
+            <img id="main-img" src="https://drive.google.com/thumbnail?id=183WZjyDLGGH_ahuxbhgoBsrVxSBTUxvz&sz=w1000" alt="Cute Memory">
         </div>
 
         <h1 id="question-text">Em bé còn giận anh honggg? 🥺</h1>
@@ -227,15 +230,17 @@
     </div>
 
     <script>
-        // Mảng chứa link ảnh Google Drive đã được convert
-        const images = [
-            "https://drive.google.com/uc?export=view&id=183WZjyDLGGH_ahuxbhgoBsrVxSBTUxvz", // Ảnh 1 
-            "https://drive.google.com/uc?export=view&id=19IGwbNbKDa4hXNhcM-35CTFXyLQXZ6rm", // Ảnh 2
-            "https://drive.google.com/uc?export=view&id=17RJI4KsJKHskCMNnNLDQy88ZQKlLrvJR", // Ảnh 3
-            "https://drive.google.com/uc?export=view&id=1AZsR-ja4UxxiJ1rVM92yfE4Jh6Cfc7U8", // Ảnh 4
-            "https://drive.google.com/uc?export=view&id=1m7XMr_TYDfxlAep7iFisJZuM9QlCwht2", // Ảnh 5
-            "https://drive.google.com/uc?export=view&id=1KVYcbW5U1SBbYa5gfGP0mI-ukjKo3FZM"  // Ảnh 6 (Cuối)
+        // Mảng chứa ID ảnh Drive, dùng link thumbnail để chống lỗi không hiển thị
+        const imageIds = [
+            "183WZjyDLGGH_ahuxbhgoBsrVxSBTUxvz", // Ảnh 1 
+            "19IGwbNbKDa4hXNhcM-35CTFXyLQXZ6rm", // Ảnh 2
+            "17RJI4KsJKHskCMNnNLDQy88ZQKlLrvJR", // Ảnh 3
+            "1AZsR-ja4UxxiJ1rVM92yfE4Jh6Cfc7U8", // Ảnh 4
+            "1m7XMr_TYDfxlAep7iFisJZuM9QlCwht2", // Ảnh 5
+            "1KVYcbW5U1SBbYa5gfGP0mI-ukjKo3FZM"  // Ảnh 6 (Cuối)
         ];
+
+        const images = imageIds.map(id => `https://drive.google.com/thumbnail?id=${id}&sz=w1000`);
 
         // Tải trước ảnh để chuyển đổi mượt mà
         images.forEach(src => {
@@ -248,7 +253,7 @@
             "Anh xin lỗi em bé nhìu nhìu 😭",
             "Năn nỉ bé lun á, tha lỗi cho anh đi!",
             "Nhìn mặt anh tội hong 🥺 Tha thứ nha?",
-            "Nút Không hư òi, bấm CÓ đi mà bé ơiii!"
+            "Nút Không biến mất rồi, bấm CÓ đi mờ 🥺❤️" // Câu số 5 (tương ứng ảnh 5)
         ];
 
         const overlay = document.getElementById('overlay');
@@ -262,6 +267,7 @@
 
         let noCount = 0;
         let yesScale = 1;
+        let noScale = 1;
 
         // Xử lý bật nhạc khi chạm vào màn hình chờ
         overlay.addEventListener('click', () => {
@@ -288,11 +294,15 @@
         }
 
         document.addEventListener('click', (e) => {
-            createFlower(e.clientX, e.clientY);
+            if (e.target.tagName !== 'BUTTON') {
+                createFlower(e.clientX, e.clientY);
+            }
         });
 
         document.addEventListener('touchstart', (e) => {
-            createFlower(e.touches[0].clientX, e.touches[0].clientY);
+            if (e.target.tagName !== 'BUTTON') {
+                createFlower(e.touches[0].clientX, e.touches[0].clientY);
+            }
         });
 
         function changeImage(newSrc) {
@@ -303,34 +313,44 @@
             }, 200);
         }
 
-        // Logic né nút "KHÔNG"
+        // Logic né và nhỏ dần nút "KHÔNG"
         function handleNoDodge(e) {
             if (e) e.preventDefault();
 
             noCount++;
-            if (noCount < pleadingTexts.length) {
+
+            if (noCount >= 4) {
+                // Tới ảnh thứ 5 (noCount = 4), ẩn hoàn toàn nút KHÔNG
+                btnNo.style.display = 'none';
+                questionText.innerText = pleadingTexts[4];
+                changeImage(images[4]); 
+            } else {
+                // Cập nhật câu chữ và ảnh
                 questionText.innerText = pleadingTexts[noCount];
                 changeImage(images[noCount]);
-            } else {
-                questionText.innerText = "Nút Có to đùng kìa, tha lỗi cho anh đii 🥺❤️";
-                changeImage(images[4]); 
+
+                // Làm nút KHÔNG teo nhỏ dần
+                noScale -= 0.22; // Giảm kích thước
+                
+                // Di chuyển vị trí
+                const padding = 20;
+                const btnWidth = btnNo.offsetWidth;
+                const btnHeight = btnNo.offsetHeight;
+                const maxX = window.innerWidth - btnWidth - padding;
+                const maxY = window.innerHeight - btnHeight - padding;
+                const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+                const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+                btnNo.style.position = 'fixed';
+                btnNo.style.left = `${randomX}px`;
+                btnNo.style.top = `${randomY}px`;
+                btnNo.style.transform = `scale(${noScale})`; // Áp dụng độ teo nhỏ
             }
 
-            yesScale += 0.35;
-            if (yesScale > 2.5) yesScale = 2.5; 
+            // Nút CÓ bự dần lên
+            yesScale += 0.4;
+            if (yesScale > 2.2) yesScale = 2.2; 
             btnYes.style.transform = `scale(${yesScale})`;
-
-            const padding = 20;
-            const btnWidth = btnNo.offsetWidth;
-            const btnHeight = btnNo.offsetHeight;
-            const maxX = window.innerWidth - btnWidth - padding;
-            const maxY = window.innerHeight - btnHeight - padding;
-            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
-            const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
-
-            btnNo.style.position = 'fixed';
-            btnNo.style.left = `${randomX}px`;
-            btnNo.style.top = `${randomY}px`;
         }
 
         btnNo.addEventListener('touchstart', handleNoDodge, { passive: false });
@@ -339,7 +359,7 @@
 
         // Logic khi bấm "CÓ"
         btnYes.addEventListener('click', (e) => {
-            e.stopPropagation(); // Ngăn sự kiện click tạo hoa đè lên pháo hoa
+            e.stopPropagation(); 
             if (typeof confetti === 'function') {
                 const duration = 3 * 1000;
                 const animationEnd = Date.now() + duration;
@@ -353,7 +373,7 @@
             }
 
             btnGroup.style.display = 'none';
-            changeImage(images[5]); // Ảnh cuối
+            changeImage(images[5]); // Đổi sang ảnh chốt hạ (Ảnh 6)
             questionText.style.color = '#e6005c';
             questionText.innerText = "Anh biết bé thương anh nhất mà! ❤️";
             letterBox.style.display = 'block';
